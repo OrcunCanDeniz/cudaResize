@@ -18,6 +18,7 @@ int main()
     Mat mat_mono_disp(height, width, CV_8UC1);
     Mat mat_resize(out_h, out_w, CV_8UC1);
     size_t pitch_mono;
+    size_t pitch_resize;
     uint8_t* img_d_;
     uint8_t* dst_img_d_;
 
@@ -30,7 +31,7 @@ int main()
     size_t matrixLenMono = width;
     size_t matrixLenResize = out_w;
     cudaMallocPitch((void**)&img_d_, &pitch_mono, width, height);
-    cudaMalloc((void**)&dst_img_d_, out_w * out_h * sizeof(float));
+    cudaMalloc((void**)&dst_img_d_, out_w * out_h * sizeof(uint8_t));
 
     cudaMemcpy2D(img_d_, pitch_mono, mat_mono.ptr(), width, matrixLenMono, height, cudaMemcpyHostToDevice);
 
