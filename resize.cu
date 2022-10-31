@@ -25,7 +25,7 @@ __global__ void resize_kernel(uint8_t* src_img, float win_size_w, float win_size
     float w_rate = 1;
     float h_rate = 1;
 
-    if (thread_ix > 50 )
+    if (thread_ix > 180 && thread_iy == 0)
     {
         printf("%d ", thread_ix);} //max thread_ix = 63
     // for (int i = floor(start_idx_w); i <= ceil(end_idx_w); i++) 
@@ -60,16 +60,17 @@ __global__ void resize_kernel(uint8_t* src_img, float win_size_w, float win_size
 void launch_resize_kernel(uint8_t* src_img, float src_h, float src_w,
                             float dst_h, float dst_w, uint8_t * dst_img)
 {
-    float scale_w = dst_w / src_w;
-    float scale_h = dst_h / src_h;
+    float scale_w = dst_w / src_w; // 2.56
+    float scale_h = dst_h / src_h; // 2.56
 
     float win_size_w = 1.f / scale_w;
     float win_size_h = 1.f / scale_h;
 
-    int win_num_y = ceil(dst_w/win_size_w);
-    int win_num_x = ceil(dst_h/win_size_h);
+    float win_num_y = ceil(src_w/win_size_w);
+    float win_num_x = ceil(src_h/win_size_h);
 
     int thread_num_block = 32;
+    std::cout << "Win num X: " << win_num_x << " Block num Y: " << win_num_y << std::endl;
     std::cout << "Block num X: " << ceil(win_num_x/thread_num_block) << " Block num Y: " << ceil(win_num_y/thread_num_block) << std::endl;
     std::cout << "Windows num X: " << win_num_x << " Windows num Y: " << win_num_y << std::endl;
     dim3 grid(ceil(win_num_x/thread_num_block), ceil(win_num_y/thread_num_block));
