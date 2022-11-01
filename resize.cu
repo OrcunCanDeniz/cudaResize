@@ -22,14 +22,15 @@ __global__ void resize_kernel(uint8_t* src_img, float scale_x, float scale_y, in
     const float x_weight = 1 - (x_s - float(x_s_low)); // 1- since bigger distance should have less weight
     const float y_weight = 1 - (y_s - float(y_s_low)); 
 
+               // xy
     const uint8_t ll = src_img[y_s_low * src_w + x_s_low];
-    const uint8_t lh = src_img[y_s_low * src_w + x_s_hi];
-    const uint8_t hl = src_img[y_s_hi * src_w + x_s_low];
+    const uint8_t lh = src_img[y_s_hi * src_w + x_s_low];
+    const uint8_t hl = src_img[y_s_low * src_w + x_s_hi];
     const uint8_t hh = src_img[y_s_hi * src_w + x_s_hi];
 
     dst_img[ thread_iy * dst_w + thread_ix ] = ll * x_weight * y_weight +
-                                                hl * x_weight * (1.0f - y_weight) +
-                                                lh * (1.0f- x_weight) * y_weight +
+                                                lh * x_weight * (1.0f - y_weight) +
+                                                hl * (1.0f- x_weight) * y_weight +
                                                 hh * (1.0f - x_weight) * (1.0f - y_weight); 
 }
 
