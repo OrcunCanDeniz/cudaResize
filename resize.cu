@@ -1,11 +1,12 @@
 #include "resize.hpp"
-#include <iostream>
-#include <stdio.h>
 
-__global__ void resize_kernel(uint8_t* src_img, float scale_x, float scale_y, int dst_w, int dst_h, int src_w, int src_h, uint8_t* dst_img)
+int thread_num_block = 18; // max 1024 threads can be launched from a block. So launch of max 18 * 18 * 3 threads is possible.
+
+__global__ void resize_kernel(uint8_t* src_img, int channel_size, int src_step, int dst_step, float scale_x, float scale_y, int dst_w, int dst_h, int src_w, int src_h, uint8_t* dst_img)
 {
     int thread_ix = blockIdx.x * blockDim.x + threadIdx.x; // height dim
     int thread_iy = blockIdx.y * blockDim.y + threadIdx.y; // width dim
+    int thread_iz = threadIdx.z; // width dim
 
     if (thread_ix > dst_w || thread_iy > dst_h){return;}
 
@@ -23,29 +24,27 @@ __global__ void resize_kernel(uint8_t* src_img, float scale_x, float scale_y, in
     const float y_weight = 1 - (y_s - float(y_s_low)); 
 
                // xy
-    const uint8_t ll = src_img[y_s_low * src_w + x_s_low];
-    const uint8_t lh = src_img[y_s_hi * src_w + x_s_low];
-    const uint8_t hl = src_img[y_s_low * src_w + x_s_hi];
-    const uint8_t hh = src_img[y_s_hi * src_w + x_s_hi];
+    const uint8_t ll = src_img[y_s_low * src_step + x_s_low * channel_size + thread_iz];
+    const uint8_t lh = src_img[y_s_hi * src_step + x_s_low * channel_size + thread_iz];
+    const uint8_t hl = src_img[y_s_low * src_step + x_s_hi * channel_size + thread_iz];
+    const uint8_t hh = src_img[y_s_hi * src_step + x_s_hi * channel_size + thread_iz];
 
-    dst_img[ thread_iy * dst_w + thread_ix ] = ll * x_weight * y_weight +
-                                                lh * x_weight * (1.0f - y_weight) +
-                                                hl * (1.0f- x_weight) * y_weight +
-                                                hh * (1.0f - x_weight) * (1.0f - y_weight); 
-}
+    dst_img[ thread_iy * dst_step + thread_ix * channel_size + thread_iz] = ll * x_weight * y_weight +
+                                                                            lh * x_weight * (1.0f - y_weight) +
+                                                                            hl * (1.0f- x_weight) * y_weight +
+                                                                            hh * (1.0f - x_weight) * (1.0f - y_weight); 
+    }
 
 
-void launch_resize_kernel(uint8_t* src_img, float src_h, float src_w, float dst_h, float dst_w, uint8_t * dst_img)
+void launch_resize_kernel(uint8_t* src_img, int channel_size, float src_h, float src_w, float dst_h, float dst_w, uint8_t * dst_img)
 {
     float scale_x = src_w / dst_w;
     float scale_y = src_h / dst_h;
 
-    int thread_num_block = 32;
-    std::cout << "Block num X: " << ceil(dst_w/thread_num_block) << " Block num Y: " << ceil(dst_h/thread_num_block) << std::endl;
-    dim3 grid( ceil(dst_w/thread_num_block), ceil(dst_h/thread_num_block));
-    dim3 block(thread_num_block, thread_num_block);
 
-
-    resize_kernel<<<grid,block>>>(src_img, scale_x, scale_y, dst_w, dst_h, src_w, src_h, dst_img);
+    dim3 grid(ceil(dst_w * thread_num_block), ceil(dst_h * thread_num_block));
+    dim3 block(thread_num_block, thread_num_block, channel_size);
+    resize_kernel<<<grid,block>>>(src_img, channel_size, channel_size*src_w, channel_size*dst_w, 
+                                    scale_x, scale_y, dst_w, dst_h, src_w, src_h, dst_img);
     cudaDeviceSynchronize();
 }
