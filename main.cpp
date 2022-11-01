@@ -9,7 +9,7 @@
 using namespace cv;
 int main()
 {
-    std::string image_path = "/home/orcun/cuda_resize/test.png";
+    std::string image_path = "/home/orcun/cudaResize/test.png";
     int width = 512;
     int height = 512;
 
