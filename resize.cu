@@ -1,6 +1,7 @@
 #include "resize.hpp"
 #include <iostream>
 #include <stdio.h>
+
 __global__ void resize_kernel(uint8_t* src_img, float scale_x, float scale_y, int dst_w, int dst_h, int src_w, int src_h, uint8_t* dst_img)
 {
     int thread_ix = blockIdx.x * blockDim.x + threadIdx.x; // height dim
@@ -10,24 +11,25 @@ __global__ void resize_kernel(uint8_t* src_img, float scale_x, float scale_y, in
 
     const float x_s = scale_x * thread_ix;
     const float y_s = scale_y * thread_iy;
-
+    
     // pixel coords to interpolate between
     const int x_s_low = floor(x_s);
     const int y_s_low = floor(y_s);
     const int x_s_hi = ceil(x_s);
     const int y_s_hi = ceil(y_s);
 
-    const float x_weight = 1 - (x_s - float(x_s_low)); // 1- since bigger difference should have the less weight
+    //bilinear weights
+    const float x_weight = 1 - (x_s - float(x_s_low)); // 1- since bigger distance should have less weight
     const float y_weight = 1 - (y_s - float(y_s_low)); 
 
-    const float ll = src_img[ y_s_low * src_w + x_s_low];
-    const float lh = src_img[ y_s_low * src_w + x_s_hi];
-    const float hl = src_img[ y_s_hi * src_w + x_s_low];
-    const float hh = src_img[ y_s_hi * src_w + x_s_hi];
+    const uint8_t ll = src_img[y_s_low * src_w + x_s_low];
+    const uint8_t lh = src_img[y_s_low * src_w + x_s_hi];
+    const uint8_t hl = src_img[y_s_hi * src_w + x_s_low];
+    const uint8_t hh = src_img[y_s_hi * src_w + x_s_hi];
 
     dst_img[ thread_iy * dst_w + thread_ix ] = ll * x_weight * y_weight +
-                                                lh * x_weight * (1.0f - y_weight) +
-                                                hl * (1.0f- x_weight) * y_weight +
+                                                hl * x_weight * (1.0f - y_weight) +
+                                                lh * (1.0f- x_weight) * y_weight +
                                                 hh * (1.0f - x_weight) * (1.0f - y_weight); 
 }
 
