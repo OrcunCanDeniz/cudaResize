@@ -43,8 +43,7 @@ __global__ void resize_kernel(uint8_t* src_img, int channel_size, int src_step, 
                         lh * x_weight * (1.0f - y_weight) +
                         hl * (1.0f- x_weight) * y_weight +
                         hh * (1.0f - x_weight) * (1.0f - y_weight);
-                                                                            hh * (1.0f - x_weight) * (1.0f - y_weight); 
-                        hh * (1.0f - x_weight) * (1.0f - y_weight);
+
     dst_img[resolveIndexNHWC(thread_ix, thread_iy, thread_iz, dst_step, channel_size)] = pixel; //indexing for nhwc output
     // dst_img[resolveIndexNCHW(thread_ix, thread_iy, thread_iz, dst_w, dst_h)] = pixel; //nchw
 }
