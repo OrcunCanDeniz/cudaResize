@@ -53,8 +53,7 @@ void launch_resize_kernel(uint8_t* src_img, int channel_size, float src_h, float
     float scale_x = src_w / dst_w;
     float scale_y = src_h / dst_h;
 
-
-    dim3 grid(ceil(dst_w * thread_num_block), ceil(dst_h * thread_num_block));
+    dim3 grid(ceil(dst_w / thread_num_block), ceil(dst_h / thread_num_block));
     dim3 block(thread_num_block, thread_num_block, channel_size);
     resize_kernel<<<grid,block>>>(src_img, channel_size, channel_size*src_w, channel_size*dst_w, 
                                     scale_x, scale_y, dst_w, dst_h, src_w, src_h, dst_img);
