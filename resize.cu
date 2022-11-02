@@ -2,6 +2,7 @@
 
 int thread_num_block = 18; // max 1024 threads can be launched from a block. So launch of max 18 * 18 * 3 threads is possible.
 
+// Works for NHWC format (RGB RGB RGB ...) pixel layout
 __global__ void resize_kernel(uint8_t* src_img, int channel_size, int src_step, int dst_step, float scale_x, float scale_y, int dst_w, int dst_h, int src_w, int src_h, uint8_t* dst_img)
 {
     int thread_ix = blockIdx.x * blockDim.x + threadIdx.x; // height dim
